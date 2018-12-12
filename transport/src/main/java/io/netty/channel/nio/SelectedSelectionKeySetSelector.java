@@ -22,7 +22,13 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.Set;
 
 final class SelectedSelectionKeySetSelector extends Selector {
+    /**
+     * SelectedSelectionKeySet对象
+     */
     private final SelectedSelectionKeySet selectionKeys;
+    /**
+     * 原始Java NIO Selector对象
+     */
     private final Selector delegate;
 
     SelectedSelectionKeySetSelector(Selector delegate, SelectedSelectionKeySet selectionKeys) {

@@ -204,17 +204,20 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     @Override
     public final ChannelPipeline addLast(EventExecutorGroup group, String name, ChannelHandler handler) {
         final AbstractChannelHandlerContext newCtx;
-        synchronized (this) {
+        synchronized (this) { // 同步，为了防止多线程并发操作pipeline底层的双向链表
+            // 检查是否有重复handler
             checkMultiplicity(handler);
 
             newCtx = newContext(group, filterName(name, handler), handler);
 
+            // 添加节点
             addLast0(newCtx);
 
             // If the registered is false it means that the channel was not registered on an eventloop yet.
             // In this case we add the context to the pipeline and add a task that will call
             // ChannelHandler.handlerAdded(...) once the channel is registered.
             if (!registered) {
+                // 设置AbstractChannelHandlerContext准备添加中
                 newCtx.setAddPending();
                 callHandlerCallbackLater(newCtx, true);
                 return this;
@@ -633,6 +636,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         try {
             // We must call setAddComplete before calling handlerAdded. Otherwise if the handlerAdded method generates
             // any pipeline events ctx.handler() will miss them because the state will not allow it.
+            // 设置AbstractChannelHandlerContext已添加
             ctx.setAddComplete();
             ctx.handler().handlerAdded(ctx);
         } catch (Throwable t) {

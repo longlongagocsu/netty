@@ -120,11 +120,15 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
 
     @Override
     public void run() {
+        // 校验必须在EventLoop线程中
         assert executor().inEventLoop();
         try {
             if (periodNanos == 0) {
+                // 设置任务不可取消
                 if (setUncancellableInternal()) {
+                    // 执行任务
                     V result = task.call();
+                    // 通知任务执行成功
                     setSuccessInternal(result);
                 }
             } else {

@@ -464,6 +464,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 promise.setFailure(new IllegalStateException("registered to an event loop already"));
                 return;
             }
+            // 校验channel和eventLoop匹配
             if (!isCompatible(eventLoop)) {
                 promise.setFailure(
                         new IllegalStateException("incompatible event loop type: " + eventLoop.getClass().getName()));
@@ -472,6 +473,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             AbstractChannel.this.eventLoop = eventLoop;
 
+            // 在EventLoop中执行
             if (eventLoop.inEventLoop()) {
                 register0(promise);
             } else {
@@ -500,6 +502,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 if (!promise.setUncancellable() || !ensureOpen(promise)) {
                     return;
                 }
+                // 记录是否为首次注册
                 boolean firstRegistration = neverRegistered;
                 doRegister();
                 neverRegistered = false;
@@ -534,6 +537,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
         @Override
         public final void bind(final SocketAddress localAddress, final ChannelPromise promise) {
+            // 判断是否在EventLoop的线程中
             assertEventLoop();
 
             if (!promise.setUncancellable() || !ensureOpen(promise)) {
@@ -553,7 +557,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                         "address (" + localAddress + ") anyway as requested.");
             }
 
+            // 记录Channel是否激活
             boolean wasActive = isActive();
+            // 绑定Channel的端口
             try {
                 doBind(localAddress);
             } catch (Throwable t) {
@@ -562,6 +568,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            // 若Channel是新激活的，触发通知Channel已激活的事件
             if (!wasActive && isActive()) {
                 invokeLater(new Runnable() {
                     @Override

@@ -30,9 +30,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class MultithreadEventExecutorGroup extends AbstractEventExecutorGroup {
 
+    /**
+     * EventExecutor数组
+     */
     private final EventExecutor[] children;
+    /**
+     * 不可变（只读）的EventExecutor数组
+     */
     private final Set<EventExecutor> readonlyChildren;
+    /**
+     * 已终止的EventExecutor数量
+     */
     private final AtomicInteger terminatedChildren = new AtomicInteger();
+    /**
+     * 用于终止EventExecutor的异步future
+     */
     private final Promise<?> terminationFuture = new DefaultPromise(GlobalEventExecutor.INSTANCE);
     private final EventExecutorChooserFactory.EventExecutorChooser chooser;
 
@@ -81,12 +93,14 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;
             try {
+                // 创建EventExecutor对象
                 children[i] = newChild(executor, args);
                 success = true;
             } catch (Exception e) {
                 // TODO: Think about if this is a good exception type
                 throw new IllegalStateException("failed to create a child event loop", e);
             } finally {
+                // 创建失败，关闭所有已创建的EventExecutor
                 if (!success) {
                     for (int j = 0; j < i; j ++) {
                         children[j].shutdownGracefully();
@@ -125,6 +139,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
 
         Set<EventExecutor> childrenSet = new LinkedHashSet<EventExecutor>(children.length);
         Collections.addAll(childrenSet, children);
+        // 创建不可变（只读）的EventExecutor数组
         readonlyChildren = Collections.unmodifiableSet(childrenSet);
     }
 

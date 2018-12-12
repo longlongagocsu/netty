@@ -165,16 +165,18 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         synchronized (childAttrs) {
             currentChildAttrs = childAttrs.entrySet().toArray(newAttrArray(0));
         }
-
+        // 添加ChannelInitializer对象到pipeline中，用于后续初始化channelHandler到pipeline中
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) throws Exception {
                 final ChannelPipeline pipeline = ch.pipeline();
                 ChannelHandler handler = config.handler();
+                // 添加配置的ChannelHandler到pipeline中
                 if (handler != null) {
                     pipeline.addLast(handler);
                 }
 
+                // 添加ServerBootstrapAcceptor
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {

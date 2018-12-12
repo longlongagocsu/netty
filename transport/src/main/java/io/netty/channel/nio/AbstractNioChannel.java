@@ -245,12 +245,15 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             }
 
             try {
+                // 目前有正在连接远程地址的ChannelPromise,则直接抛出异常，禁止同时发起多个连接
                 if (connectPromise != null) {
                     // Already a connect in process.
                     throw new ConnectionPendingException();
                 }
 
+                // 记录Channel是否激活
                 boolean wasActive = isActive();
+                // 执行连接远程地址
                 if (doConnect(remoteAddress, localAddress)) {
                     fulfillConnectPromise(promise, wasActive);
                 } else {
@@ -298,13 +301,16 @@ public abstract class AbstractNioChannel extends AbstractChannel {
                 return;
             }
 
+            // 获得Channel是否激活
             // Get the state as trySuccess() may trigger an ChannelFutureListener that will close the Channel.
             // We still need to ensure we call fireChannelActive() in this case.
             boolean active = isActive();
 
+            // 回调通知promise执行成功
             // trySuccess() will return false if a user cancelled the connection attempt.
             boolean promiseSet = promise.trySuccess();
 
+            // 若Channel是新激活的，触发通知Channel已激活的事件
             // Regardless if the connection attempt was cancelled, channelActive() event should be triggered,
             // because what happened is what happened.
             if (!wasActive && active) {
@@ -323,6 +329,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
                 return;
             }
 
+            // 回调通知promise发生异常
             // Use tryFailure() instead of setFailure() to avoid the race against cancel().
             promise.tryFailure(cause);
             closeIfClosed();
@@ -333,6 +340,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             // Note this method is invoked by the event loop only if the connection attempt was
             // neither cancelled nor timed out.
 
+            // 判断是否在EventLoop的线程中
             assert eventLoop().inEventLoop();
 
             try {
